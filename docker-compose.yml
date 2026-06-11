@@ -26,28 +26,42 @@ services:
 
   api:
     build: .
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: task_service
       POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      RABBITMQ_USER: user
+      RABBITMQ_PASSWORD: password
       RABBITMQ_HOST: rabbitmq
-    env_file: .env
+      RABBITMQ_PORT: 5672
     ports:
       - "8000:8000"
     volumes:
       - ./app:/app/app
+      - ./alembic:/app/alembic
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
 
   worker:
     build: .
-    command: sh -c "alembic upgrade head && python -m app.worker"
+    command: python -m app.worker
     environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: task_service
       POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      RABBITMQ_USER: user
+      RABBITMQ_PASSWORD: password
       RABBITMQ_HOST: rabbitmq
-    env_file: .env
+      RABBITMQ_PORT: 5672
     volumes:
       - ./app:/app/app
+      - ./alembic:/app/alembic
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
